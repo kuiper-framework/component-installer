@@ -1,0 +1,21 @@
+{
+    "description": "Composer plugin install kuiper component",
+    "name": "kuiper/component-installer",
+    "license": "MIT",
+    "type": "composer-plugin",
+    "require": {
+        "php": "^7.2",
+        "composer-plugin-api": "^1.0"
+    },
+    "require-dev": {
+        "composer/composer": "^1.5.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "kuiper\\component\\": "src/"
+        }
+    },
+    "extra": {
+        "class": "kuiper\\component\\ComponentInstaller"
+    }
+}
