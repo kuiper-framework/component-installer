@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ComponentInstaller implements PluginInterface, EventSubscriberInterface
 {
-    public const CONFIG_FILE = 'config/kuiper.php';
+    public const CONFIG_FILE = 'config/container.php';
     /**
      * @var IOInterface
      */
@@ -223,6 +223,10 @@ return ' . self::dump($copy). ";\n");
             return;
         }
         $rootExtra = $this->extractMetadata($this->composer->getPackage());
+        $blacklist = $rootExtra['blacklist'] ?? [];
+        if (in_array($name, $blacklist, true)) {
+            return;
+        }
         $whitelist = $rootExtra['whitelist'] ?? [];
         if (!in_array($name, $whitelist, true)
             && !$this->io->askConfirmation("Install component $name [y]: ")) {
