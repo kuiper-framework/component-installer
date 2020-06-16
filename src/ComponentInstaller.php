@@ -207,7 +207,9 @@ return ' . self::dump($copy). ";\n");
 
     private function getPsr4Namespaces(PackageInterface $package)
     {
-        return array_keys($package->getAutoload()['psr-4'] ?? []);
+        return array_map(function($ns) {
+            return trim($ns, '\\');
+        }, array_keys($package->getAutoload()['psr-4'] ?? []));
     }
 
     /**
