@@ -167,13 +167,14 @@ class ComponentInstaller implements PluginInterface, EventSubscriberInterface
 
     private function merge(array $copy, array $extra): array
     {
+        $previous = $this->normalizeNamespaces($copy['component_scan'] ?? []);
+        $current = $this->normalizeNamespaces($this->getExtraConfigAsArray($extra, 'component-scan'));
         $copy['component_scan'] = array_values(array_unique(array_merge(
-            $copy['component_scan'] ?? [],
-            $extra['component-scan'] ?? []
+            array_diff($previous, $current), $current
         )));
         $copy['configuration'] = array_values(array_unique(array_merge(
             $copy['configuration'] ?? [],
-            $extra['configuration'] ?? []
+            $this->getExtraConfigAsArray($extra, 'configuration')
         )));
         return $copy;
     }
@@ -182,11 +183,11 @@ class ComponentInstaller implements PluginInterface, EventSubscriberInterface
     {
         $copy['component_scan'] = array_values(array_diff(
             $copy['component_scan'] ?? [],
-            $extra['component-scan'] ?? []
+            $this->getExtraConfigAsArray($extra, 'component-scan')
         ));
         $copy['configuration'] = array_values(array_diff(
             $copy['configuration'] ?? [],
-            $extra['configuration'] ?? []
+            $this->getExtraConfigAsArray($extra, 'configuration')
         ));
         return $copy;
     }
@@ -195,11 +196,11 @@ class ComponentInstaller implements PluginInterface, EventSubscriberInterface
     {
         $dir = dirname($file);
         if (!is_dir($dir) && !mkdir($dir) && !is_dir($dir)) {
-            throw new \RuntimeException("cannot create directry $dir");
+            throw new \RuntimeException("cannot create directory $dir");
         }
         file_put_contents($file, '<?php
 /**
- * This file is automatic generator by kuiper/component-installer, don\'t edit it mannuly
+ * This file is automatic generator by kuiper/component-installer, don\'t edit it manually
  */
  
 return ' . self::dump($copy). ";\n");
@@ -207,9 +208,19 @@ return ' . self::dump($copy). ";\n");
 
     private function getPsr4Namespaces(PackageInterface $package)
     {
-        return array_map(function($ns) {
+        return array_map(static function($ns) {
             return trim($ns, '\\');
         }, array_keys($package->getAutoload()['psr-4'] ?? []));
+    }
+
+    private function normalizeNamespaces(array $namespaces): array
+    {
+        return array_map([$this, 'normalizeNamespace'], $namespaces);
+    }
+
+    private function normalizeNamespace(string $namespace): string
+    {
+        return trim($namespace, '\\ ');
     }
 
     /**
@@ -225,15 +236,27 @@ return ' . self::dump($copy). ";\n");
             return;
         }
         $rootExtra = $this->extractMetadata($this->composer->getPackage());
-        $blacklist = $rootExtra['blacklist'] ?? [];
+        $blacklist = $this->getExtraConfigAsArray($rootExtra, 'blacklist');
         if (in_array($name, $blacklist, true)) {
             return;
         }
-        $whitelist = $rootExtra['whitelist'] ?? [];
+        $whitelist = $this->getExtraConfigAsArray($rootExtra, 'whitelist');
         if (!in_array($name, $whitelist, true)
             && !$this->io->askConfirmation("Install component $name [y]: ")) {
             return;
         }
         $this->mergeInto($extra, $rootExtra);
+    }
+
+    private function getExtraConfigAsArray(array $extra, string $name): array
+    {
+        $value = $extra[$name] ?? [];
+        if (is_string($value)) {
+            $value = [$value];
+        }
+        if (!is_array($value)) {
+            throw new \InvalidArgumentException("invalid $name config, expect array, got " . gettype($value));
+        }
+        return $value;
     }
 }
