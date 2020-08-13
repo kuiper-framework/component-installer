@@ -241,7 +241,7 @@ return ' . self::dump($copy). ";\n");
             return;
         }
         $whitelist = $this->getExtraConfigAsArray($rootExtra, 'whitelist');
-        if (!in_array($name, $whitelist, true)
+        if ($this->matchWhitelist($name, $whitelist)
             && !$this->io->askConfirmation("Install component $name [y]: ")) {
             return;
         }
@@ -258,5 +258,15 @@ return ' . self::dump($copy). ";\n");
             throw new \InvalidArgumentException("invalid $name config, expect array, got " . gettype($value));
         }
         return $value;
+    }
+
+    private function matchWhitelist(string $name, array $whitelist): bool
+    {
+        foreach ($whitelist as $item) {
+            if ($item === $name || fnmatch($item, $name)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
