@@ -241,7 +241,7 @@ return ' . self::dump($copy). ";\n");
             return;
         }
         $whitelist = $this->getExtraConfigAsArray($rootExtra, 'whitelist');
-        if ($this->matchWhitelist($name, $whitelist)
+        if (!$this->matchWhitelist($name, $whitelist)
             && !$this->io->askConfirmation("Install component $name [y]: ")) {
             return;
         }
