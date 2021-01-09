@@ -42,6 +42,14 @@ class ComponentInstaller implements PluginInterface, EventSubscriberInterface
         $this->io = $io;
     }
 
+    public function deactivate(Composer $composer, IOInterface $io)
+    {
+    }
+
+    public function uninstall(Composer $composer, IOInterface $io)
+    {
+    }
+
     public static function generate(): void
     {
         $io = new ConsoleIO(new ArrayInput([]), new ConsoleOutput(), new HelperSet([new QuestionHelper()]));
