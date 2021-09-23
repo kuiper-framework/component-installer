@@ -112,7 +112,7 @@ class ComponentInstaller implements PluginInterface, EventSubscriberInterface
     {
         switch (gettype($var)) {
             case "string":
-                return '"' . addcslashes($var, "\\\$\"\r\n\t\v\f") . '"';
+                return "'" . addcslashes($var, "'\\\$\r\n\t\v\f") . "'";
             case "array":
                 $indexed = array_keys($var) === range(0, count($var) - 1);
                 $r = [];
@@ -200,8 +200,36 @@ class ComponentInstaller implements PluginInterface, EventSubscriberInterface
         return $copy;
     }
 
+    /**
+     * make sure kuiper package configuration lowest priority
+     * @param array $arr
+     */
+    private function sort(array &$arr): void
+    {
+        $index = array_flip($arr);
+        usort($arr, static function ($a, $b) use ($index) {
+            $aStart = strpos($a, 'kuiper\\') === 0;
+            $bStart = strpos($b, 'kuiper\\') === 0;
+            if ($aStart) {
+                if ($bStart) {
+                    return $index[$a] - $index[$b];
+                }
+                return -1;
+            }
+
+            if ($bStart) {
+                return 1;
+            }
+
+            return $index[$a] - $index[$b];
+        });
+    }
+
     private function write(array $copy, string $file)
     {
+        if (isset($copy['configuration']) && is_array($copy['configuration'])) {
+            $this->sort($copy['configuration']);
+        }
         $dir = dirname($file);
         if (!is_dir($dir) && !mkdir($dir) && !is_dir($dir)) {
             throw new \RuntimeException("cannot create directory $dir");
