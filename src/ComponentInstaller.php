@@ -207,22 +207,15 @@ class ComponentInstaller implements PluginInterface, EventSubscriberInterface
     private function sort(array &$arr): void
     {
         $index = array_flip($arr);
-        usort($arr, static function ($a, $b) use ($index) {
-            $aStart = strpos($a, 'kuiper\\') === 0;
-            $bStart = strpos($b, 'kuiper\\') === 0;
-            if ($aStart) {
-                if ($bStart) {
-                    return $index[$a] - $index[$b];
-                }
-                return -1;
+        foreach ($index as $name => $pos) {
+            if (strpos($name, 'kuiper\\') === 0) {
+                $index[$name] = strpos($name, 'kuiper\\event') === 0 ? 100 : $pos;
+            } else {
+                $index[$name] = 1000 + $pos;
             }
-
-            if ($bStart) {
-                return 1;
-            }
-
-            return $index[$a] - $index[$b];
-        });
+        }
+        asort($index);
+        $arr = array_keys($index);
     }
 
     private function write(array $copy, string $file)
